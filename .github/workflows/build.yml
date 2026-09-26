@@ -1,4 +1,4 @@
-name: Build ENTR'AIDE RDC (Web & Android APK)
+name: Build ENTR'AIDE RDC (Web & Release)
 
 on:
   push:
@@ -7,9 +7,12 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-web:
-    name: 🌐 1. Build Web Production (dist)
+    name: 🌐 1. Compilation Web Production (dist)
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Cloner le dépôt
@@ -26,50 +29,31 @@ jobs:
       - name: 🏗️ Compiler l'application (Vite build)
         run: npm run build
 
-      - name: 📤 Exporter le livrable Web (Artifact dist)
+      - name: 🗜️ Compresser le build (dist.zip)
+        run: |
+          cd dist && zip -r ../entraide-rdc-web-dist.zip . && cd ..
+
+      - name: 🚀 Publier le build dans les Releases GitHub (Contourne le quota d'artefacts)
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          tag_name: v1.0-build
+          name: "ENTR'AIDE RDC - Build de Production Web & PWA"
+          body: |
+            ### 📦 Build de production généré avec succès !
+            
+            Téléchargez le fichier **`entraide-rdc-web-dist.zip`** ci-dessous pour déployer votre application ou générer votre APK Android via [PWABuilder](https://www.pwabuilder.com).
+          files: entraide-rdc-web-dist.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: 📤 Exporter le livrable Web (Artifact secondaire)
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: entraide-rdc-web-dist
           path: dist/
-          retention-days: 30
-
-  build-android:
-    name: 📱 2. Build Android APK
-    needs: build-web
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Cloner le dépôt
-        uses: actions/checkout@v4
-
-      - name: ⚙️ Configurer Java JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: ⚙️ Configurer Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: ⚙️ Configurer Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: 📦 Installer les dépendances
-        run: npm install --legacy-peer-deps
-
-      - name: 🏗️ Compiler le livrable Web
-        run: npm run build
-
-      - name: 📱 Préparer le package Android
-        run: |
-          mkdir -p android-build
-          cp -r dist/* android-build/
-          echo "Web build ready for APK packaging."
-
-      - name: 📦 Télécharger l'archive Web prête pour hébergement ou APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: entraide-rdc-android-bundle
-          path: android-build/
-          retention-days: 30
+          retention-days: 1
