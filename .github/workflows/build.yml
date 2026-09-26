@@ -1,9 +1,7 @@
-name: Build ENTR'AIDE RDC (Web & Release)
+name: Build Web & Android APK
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
     branches: [ main, master ]
   workflow_dispatch:
 
@@ -11,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  build-web:
-    name: 🌐 1. Compilation Web Production (dist)
+  build-and-release:
+    name: 📱 Compiler l'application Web & Générer l'APK Android
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Cloner le dépôt
@@ -23,37 +21,55 @@ jobs:
         with:
           node-version: 20
 
-      - name: 📦 Installer les dépendances
+      - name: ☕ Configurer Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 🤖 Configurer Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 📦 Installer les dépendances Node.js
         run: npm install --legacy-peer-deps
 
-      - name: 🏗️ Compiler l'application (Vite build)
+      - name: 🏗️ Compiler l'application Web (Vite)
         run: npm run build
 
-      - name: 🗜️ Compresser le build (dist.zip)
+      - name: 🔄 Synchroniser avec le projet Android Capacitor
+        run: npx cap sync android
+
+      - name: 🔨 Compiler le fichier APK Android avec Gradle
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
+          cd ..
+          cp android/app/build/outputs/apk/debug/app-debug.apk ./entraide-rdc.apk
+          ls -la entraide-rdc.apk
+
+      - name: 🗜️ Archiver le livrable Web
         run: |
           cd dist && zip -r ../entraide-rdc-web-dist.zip . && cd ..
 
-      - name: 🚀 Publier le build dans les Releases GitHub (Contourne le quota d'artefacts)
+      - name: 🚀 Mettre à disposition l'APK et le Web dans GitHub Releases
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
-          tag_name: v1.0-build
-          name: "ENTR'AIDE RDC - Build de Production Web & PWA"
+          tag_name: v1.0
+          name: "📱 ENTR'AIDE RDC - APK Android & Application Web"
           body: |
-            ### 📦 Build de production généré avec succès !
+            ## 🎉 Livrables prêts au téléchargement !
             
-            Téléchargez le fichier **`entraide-rdc-web-dist.zip`** ci-dessous pour déployer votre application ou générer votre APK Android via [PWABuilder](https://www.pwabuilder.com).
-          files: entraide-rdc-web-dist.zip
+            ### 📱 Pour votre smartphone Android :
+            Téléchargez le fichier **`entraide-rdc.apk`** ci-dessous, transférez-le sur votre téléphone ou ouvrez le lien directement depuis votre smartphone pour l'installer.
+            
+            ### 🌐 Pour l'hébergement Web :
+            Téléchargez **`entraide-rdc-web-dist.zip`** pour déployer le site sur votre hébergeur.
+          files: |
+            entraide-rdc.apk
+            entraide-rdc-web-dist.zip
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
-
-      - name: 📤 Exporter le livrable Web (Artifact secondaire)
-        uses: actions/upload-artifact@v4
-        continue-on-error: true
-        with:
-          name: entraide-rdc-web-dist
-          path: dist/
-          retention-days: 1

@@ -1,0 +1,8 @@
+{
+	"appId": "cd.entraide.rdc",
+	"appName": "ENTR'AIDE RDC",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	}
+}

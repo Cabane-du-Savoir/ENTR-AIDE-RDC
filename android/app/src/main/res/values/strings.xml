@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ENTR\'AIDE RDC</string>
+    <string name="title_activity_main">ENTR\'AIDE RDC</string>
+    <string name="package_name">cd.entraide.rdc</string>
+    <string name="custom_url_scheme">cd.entraide.rdc</string>
+</resources>
