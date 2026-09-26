@@ -143,6 +143,7 @@ export interface StoryItem {
   caption: string;
   linkText?: string;
   linkPostId?: string;
+  ctaType?: 'apply' | 'learn_more';
   createdAt: string;
   viewed?: boolean;
 }
@@ -156,6 +157,8 @@ export interface DirectMessage {
   text: string;
   timestamp: string;
   attachmentName?: string;
+  attachmentSize?: string;
+  attachmentUrl?: string;
   isApplication?: boolean;
 }
 

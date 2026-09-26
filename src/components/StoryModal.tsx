@@ -80,23 +80,29 @@ export const StoryModal: React.FC = () => {
           </p>
 
           {/* Action Link Button */}
-          {linkedPost ? (
+          {linkedPost && activeStory.ctaType === 'learn_more' && linkedPost.externalLink ? (
+            <a
+              href={linkedPost.externalLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setActiveStory(null)}
+              className="mt-2 w-full py-2.5 px-4 rounded-full bg-[#00629d] hover:bg-[#004a77] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+            >
+              <span>{activeStory.linkText || 'En savoir plus'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </a>
+          ) : (
             <button
               onClick={() => {
                 setActiveStory(null);
-                startChatWithPostAuthor(linkedPost);
+                if (linkedPost) {
+                  startChatWithPostAuthor(linkedPost);
+                }
               }}
               className="mt-2 w-full py-2.5 px-4 rounded-full bg-[#00629d] hover:bg-[#004a77] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
             >
-              <span>{activeStory.linkText || 'Consulter l’offre'}</span>
+              <span>{activeStory.linkText || (activeStory.ctaType === 'learn_more' ? 'En savoir plus' : 'Postuler')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          ) : (
-            <button
-              onClick={() => setActiveStory(null)}
-              className="mt-2 w-full py-2.5 px-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition-all cursor-pointer"
-            >
-              Fermer
             </button>
           )}
         </div>

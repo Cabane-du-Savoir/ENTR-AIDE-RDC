@@ -15,11 +15,13 @@ import {
   Sparkles,
   Search,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  Paperclip,
+  Upload
 } from 'lucide-react';
 
 export const CvThequeModal: React.FC = () => {
-  const { isCvModalOpen, setIsCvModalOpen, currentUser, setIsCoachingModalOpen, showToast } = useApp();
+  const { isCvModalOpen, setIsCvModalOpen, currentUser, showToast } = useApp();
 
   const [activeTab, setActiveTab] = useState<'my_cv' | 'browse_candidates'>('my_cv');
   const [newSkill, setNewSkill] = useState('');
@@ -29,8 +31,29 @@ export const CvThequeModal: React.FC = () => {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUni, setFilterUni] = useState('all');
+  const [userCvName, setUserCvName] = useState(
+    currentUser.cvFileName || `CV_${currentUser.name.replace(/\s+/g, '_')}_2026.pdf`
+  );
+  const [userCvSize, setUserCvSize] = useState(currentUser.cvFileSize || '420 Ko');
 
   if (!isCvModalOpen) return null;
+
+  const handleCvFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 25 * 1024 * 1024) {
+        showToast('Le document ne doit pas dépasser 25 Mo', 'info');
+        return;
+      }
+      const sizeStr = file.size > 1024 * 1024 
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} Mo`
+        : `${Math.round(file.size / 1024)} Ko`;
+      
+      setUserCvName(file.name);
+      setUserCvSize(sizeStr);
+      showToast(`Document "${file.name}" (${sizeStr}) sélectionné depuis votre gestionnaire de fichiers !`, 'success');
+    }
+  };
 
   const handleAddSkill = (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,45 +224,64 @@ export const CvThequeModal: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => {
-                    setIsCvModalOpen(false);
-                    setIsCoachingModalOpen(true);
-                  }}
-                  className="px-4 py-2 bg-[#ffddb8] hover:bg-[#ffb95f] text-[#b87500] font-bold text-xs rounded-full shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  onClick={handleDownloadCv}
+                  className="px-4 py-2 bg-[#00629d] hover:bg-[#004a77] text-white font-bold text-xs rounded-full shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Audit IA de mon CV</span>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Télécharger mon CV PDF</span>
                 </button>
               </div>
 
               {/* PDF Document Section */}
               <div className="space-y-3">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-[#44474c]">
-                  Document CV Téléchargeable (Format PDF)
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-[#44474c]">
+                    Document CV (PDF ou Word)
+                  </h4>
+                  <span className="text-[11px] text-[#00629d] font-semibold">Insertion Pro RDC</span>
+                </div>
 
-                <div className="p-4 rounded-2xl border border-[#dae2fd] bg-[#faf8ff] flex items-center justify-between gap-3">
+                <div className="p-4 rounded-2xl border border-[#dae2fd] bg-[#faf8ff] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-[#ffdad6] text-[#ba1a1a] flex items-center justify-center font-bold text-xs shrink-0">
                       PDF
                     </div>
                     <div className="truncate">
                       <p className="font-bold text-xs text-[#131b2e] truncate">
-                        {currentUser.cvFileName || `CV_${currentUser.name.replace(/\s+/g, '_')}_2026.pdf`}
+                        {userCvName}
                       </p>
                       <p className="text-[11px] text-[#44474c]">
-                        Taille : {currentUser.cvFileSize || '420 Ko'} · Mis à jour récemment
+                        Taille : {userCvSize} · Disponible pour vos candidatures
                       </p>
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleDownloadCv}
-                    className="px-4 py-2 bg-[#00629d] hover:bg-[#004a77] text-white rounded-full font-semibold text-xs flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>{downloadSuccess ? 'Téléchargé !' : 'Télécharger le PDF'}</span>
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Épingle : Rechercher dans le gestionnaire de fichiers */}
+                    <input
+                      id="cv-file-browser"
+                      type="file"
+                      accept=".pdf,.doc,.docx,application/pdf"
+                      onChange={handleCvFileUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="cv-file-browser"
+                      className="px-3.5 py-2 bg-white hover:bg-[#eaedff] text-[#00629d] border border-[#00629d] rounded-full font-semibold text-xs flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer"
+                      title="Épingle : Ouvrir le gestionnaire de fichiers pour rechercher votre CV"
+                    >
+                      <Paperclip className="w-3.5 h-3.5" />
+                      <span>Parcourir mes fichiers</span>
+                    </label>
+
+                    <button
+                      onClick={handleDownloadCv}
+                      className="px-3.5 py-2 bg-[#00629d] hover:bg-[#004a77] text-white rounded-full font-semibold text-xs flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>{downloadSuccess ? 'Téléchargé !' : 'Télécharger'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

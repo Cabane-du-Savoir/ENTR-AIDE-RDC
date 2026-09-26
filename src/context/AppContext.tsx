@@ -64,7 +64,7 @@ interface AppContextType {
   activeConversationId: string | null;
   setActiveConversationId: (id: string | null) => void;
   messages: Record<string, DirectMessage[]>;
-  sendMessage: (convId: string, text: string, isApplication?: boolean) => void;
+  sendMessage: (convId: string, text: string, isApplication?: boolean, attachment?: { name: string; size?: string; url?: string }) => void;
   startChatWithPostAuthor: (post: Post) => void;
 
   viewMode: 'mobile_shell' | 'responsive_full';
@@ -78,6 +78,15 @@ interface AppContextType {
   activeStory: StoryItem | null;
   setActiveStory: (story: StoryItem | null) => void;
   viewStory: (storyId: string) => void;
+  isStoryCreateOpen: boolean;
+  setIsStoryCreateOpen: (open: boolean) => void;
+  submitNewStory: (storyData: {
+    imageUrl: string;
+    title: string;
+    caption: string;
+    ctaType: 'apply' | 'learn_more';
+    linkPostId?: string;
+  }) => void;
 
   // Modals
   isRegisterOpen: boolean;
@@ -100,8 +109,6 @@ interface AppContextType {
   setSelectedPostForShare: (post: Post | null) => void;
   isGuideOpen: boolean;
   setIsGuideOpen: (open: boolean) => void;
-  isCoachingModalOpen: boolean;
-  setIsCoachingModalOpen: (open: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -164,7 +171,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedPostForShare, setSelectedPostForShare] = useState<Post | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [isCoachingModalOpen, setIsCoachingModalOpen] = useState(false);
+  const [isStoryCreateOpen, setIsStoryCreateOpen] = useState(false);
+
+  const submitNewStory = (storyData: {
+    imageUrl: string;
+    title: string;
+    caption: string;
+    ctaType: 'apply' | 'learn_more';
+    linkPostId?: string;
+  }) => {
+    const newStory: StoryItem = {
+      id: `story_${Date.now()}`,
+      authorId: currentUser.id,
+      authorName: currentUser.name,
+      authorInitials: currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'ER',
+      isVerified: !!currentUser.isVerified || !!currentUser.isOfficialInstitution,
+      imageUrl: storyData.imageUrl,
+      title: storyData.title,
+      caption: storyData.caption,
+      ctaType: storyData.ctaType,
+      linkText: storyData.ctaType === 'apply' ? 'Postuler au stage' : 'En savoir plus',
+      linkPostId: storyData.linkPostId,
+      createdAt: 'À l’instant',
+      viewed: false,
+    };
+    setStories(prev => [newStory, ...prev]);
+    setIsStoryCreateOpen(false);
+    showToast('Votre statut / story a été publié avec succès !', 'success');
+  };
 
   const showToast = (message: string, type: 'success' | 'info' | 'heart' = 'success') => {
     setToast({ id: `toast_${Date.now()}`, message, type });
@@ -342,8 +376,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(`Offre boostée pour ${days} jours avec succès !`, 'success');
   };
 
-  const sendMessage = (convId: string, text: string, isApplication?: boolean) => {
-    if (!text.trim()) return;
+  const sendMessage = (
+    convId: string, 
+    text: string, 
+    isApplication?: boolean, 
+    attachment?: { name: string; size?: string; url?: string }
+  ) => {
+    if (!text.trim() && !attachment) return;
     const now = new Date();
     const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
@@ -356,7 +395,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       text: text.trim(),
       timestamp: timeString,
       isApplication: !!isApplication,
-      attachmentName: isApplication && currentUser.cvFileName ? currentUser.cvFileName : undefined,
+      attachmentName: attachment ? attachment.name : (isApplication && currentUser.cvFileName ? currentUser.cvFileName : undefined),
+      attachmentSize: attachment ? attachment.size : (isApplication ? currentUser.cvFileSize || '420 Ko' : undefined),
+      attachmentUrl: attachment?.url,
     };
 
     setMessages(prev => ({
@@ -368,7 +409,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (c.id === convId) {
         return {
           ...c,
-          lastMessage: text.trim(),
+          lastMessage: text.trim() || `Fichier joint : ${attachment?.name || 'Document'}`,
           lastMessageTime: timeString,
         };
       }
@@ -377,6 +418,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (isApplication) {
       showToast('Candidature avec CV transmise au recruteur !', 'success');
+    } else if (attachment) {
+      showToast(`Document "${attachment.name}" envoyé !`, 'success');
     }
   };
 
@@ -472,8 +515,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedPostForShare,
         isGuideOpen,
         setIsGuideOpen,
-        isCoachingModalOpen,
-        setIsCoachingModalOpen,
+        isStoryCreateOpen,
+        setIsStoryCreateOpen,
+        submitNewStory,
       }}
     >
       {children}

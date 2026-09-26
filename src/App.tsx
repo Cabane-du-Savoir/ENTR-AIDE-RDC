@@ -12,7 +12,7 @@ import { CvThequeModal } from './components/CvThequeModal';
 import { BoostModal } from './components/BoostModal';
 import { ShareModal } from './components/ShareModal';
 import { QuickGuideModal } from './components/QuickGuideModal';
-import { CareerCoachingModal } from './components/CareerCoachingModal';
+import { CreateStoryModal } from './components/CreateStoryModal';
 import { StoryModal } from './components/StoryModal';
 import { Toast } from './components/Toast';
 import { Wifi, BatteryMedium, Signal, Smartphone, Monitor } from 'lucide-react';
@@ -123,7 +123,7 @@ const AppContent: React.FC = () => {
       <BoostModal />
       <ShareModal />
       <QuickGuideModal />
-      <CareerCoachingModal />
+      <CreateStoryModal />
       <StoryModal />
       <Toast />
 

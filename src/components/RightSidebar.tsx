@@ -16,7 +16,6 @@ import {
 export const RightSidebar: React.FC = () => {
   const { 
     posts, 
-    setIsCoachingModalOpen, 
     setJobSectorFilter,
     setSearchQuery,
     setSelectedCategory,
@@ -38,25 +37,29 @@ export const RightSidebar: React.FC = () => {
   return (
     <aside className="space-y-4">
       
-      {/* Coaching Carrière IA card */}
+      {/* Test sur Téléphone & PWA / APK Info */}
       <div className="p-5 rounded-3xl bg-gradient-to-br from-[#00629d] to-[#00a2fd] text-white shadow-md space-y-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
+            <Smartphone className="w-4 h-4 text-white" />
           </div>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#ffddb8]">Assistant IA RDC</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-[#ffddb8]">Test Mobile &amp; APK</span>
         </div>
         <h3 className="font-bold text-base leading-snug">
-          Boostez vos chances d&apos;embauche avec l&apos;IA
+          Testez l&apos;application sur votre smartphone
         </h3>
         <p className="text-xs text-white/90 leading-relaxed">
-          Audit immédiat de votre CV et simulation des questions d&apos;entretien pour les recruteurs en RDC.
+          Ouvrez le lien de partage sur votre téléphone pour ajouter ENTR&apos;AIDE RDC à votre écran d&apos;accueil (Web APK).
         </p>
         <button
-          onClick={() => setIsCoachingModalOpen(true)}
-          className="w-full py-2.5 rounded-full bg-white text-[#00629d] hover:bg-[#eaedff] font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer"
+          onClick={() => {
+            setViewMode(viewMode === 'mobile_shell' ? 'responsive_full' : 'mobile_shell');
+            showToast(viewMode === 'mobile_shell' ? 'Vue Web activée' : 'Simulateur Android activé !', 'info');
+          }}
+          className="w-full py-2.5 rounded-full bg-white text-[#00629d] hover:bg-[#eaedff] font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
         >
-          Lancer mon coaching gratuit
+          <Smartphone className="w-3.5 h-3.5" />
+          <span>{viewMode === 'mobile_shell' ? 'Basculer en Plein Écran' : 'Simuler l’écran smartphone'}</span>
         </button>
       </div>
 

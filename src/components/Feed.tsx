@@ -31,9 +31,9 @@ export const Feed: React.FC = () => {
     setSearchQuery,
     currentUser,
     setIsCreatePostOpen,
-    setIsCoachingModalOpen,
     setIsCvModalOpen,
     setIsGuideOpen,
+    setIsStoryCreateOpen,
     stories,
     viewStory
   } = useApp();
@@ -159,27 +159,21 @@ export const Feed: React.FC = () => {
               Retrouvez tous les stages académiques, emplois juniors, bourses d&apos;études, conférences, hackathons et randonnées à Kinshasa, Lubumbashi, Goma et toutes les provinces.
             </p>
 
-            {/* Quick Action Buttons */}
+            {/* Quick Action Buttons (Single clean action + Guide) */}
             <div className="flex flex-wrap items-center gap-2.5">
               <button
-                onClick={() => setIsCreatePostOpen(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#00629d] hover:bg-[#004a77] text-white font-semibold text-xs shadow-sm active:scale-95 transition-all cursor-pointer"
+                onClick={() => {
+                  window.scrollTo({ top: 400, behavior: 'smooth' });
+                }}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-white text-[#00629d] hover:bg-[#eaedff] font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                <span>Publier une opportunité</span>
-              </button>
-
-              <button
-                onClick={() => setIsCoachingModalOpen(true)}
-                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-white text-[#131b2e] hover:bg-[#eaedff] font-semibold text-xs shadow-sm active:scale-95 transition-all cursor-pointer"
-              >
-                <span className="text-[#b87500]">✨</span>
-                <span>Coaching Carrière IA</span>
+                <span className="material-symbols-outlined text-[18px]">travel_explore</span>
+                <span>Explorer les opportunités</span>
               </button>
 
               <button
                 onClick={() => setIsGuideOpen(true)}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition-all cursor-pointer"
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition-all cursor-pointer"
               >
                 <HelpCircle className="w-4 h-4 text-[#ffddb8]" />
                 <span>Guide rapide</span>
@@ -193,15 +187,16 @@ export const Feed: React.FC = () => {
       {/* Social Stories / En Vedette Highlights Bar (Instagram / Facebook / LinkedIn style) */}
       <section className="py-1">
         <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2 px-1">
-          {/* Add story / my announcement button */}
+          {/* Add story / my status button */}
           <button
-            onClick={() => setIsCreatePostOpen(true)}
+            onClick={() => setIsStoryCreateOpen(true)}
             className="flex flex-col items-center gap-1.5 shrink-0 group cursor-pointer"
+            title="Publier votre annonce (story/statut) avec bouton Postuler ou En savoir plus"
           >
             <div className="relative w-14 h-14 rounded-full p-0.5 border-2 border-dashed border-[#00629d] flex items-center justify-center bg-[#eaedff] group-hover:bg-[#d6e3fe] transition-all">
               <span className="material-symbols-outlined text-[22px] text-[#00629d]">add</span>
             </div>
-            <span className="text-[10.5px] font-semibold text-[#131b2e] truncate max-w-[68px]">
+            <span className="text-[10.5px] font-semibold text-[#131b2e] truncate max-w-[72px]">
               Votre annonce
             </span>
           </button>
@@ -426,11 +421,11 @@ export const Feed: React.FC = () => {
           <button
             onClick={() => {
               setSelectedCategory('conferences');
-              setIsCreatePostOpen(true);
+              window.scrollTo({ top: 400, behavior: 'smooth' });
             }}
             className="px-4 py-2 bg-[#00629d] hover:bg-[#004a77] text-white rounded-full text-xs font-semibold shadow-xs cursor-pointer active:scale-95 transition-all whitespace-nowrap"
           >
-            Poser une question
+            Explorer les échanges
           </button>
         </div>
       )}
@@ -449,11 +444,11 @@ export const Feed: React.FC = () => {
           <button
             onClick={() => {
               setSelectedCategory('sorties');
-              setIsCreatePostOpen(true);
+              window.scrollTo({ top: 400, behavior: 'smooth' });
             }}
             className="px-4 py-2 bg-[#0e1c2f] hover:bg-black text-white rounded-full text-xs font-semibold shadow-xs cursor-pointer active:scale-95 transition-all whitespace-nowrap"
           >
-            Proposer une activité
+            Explorer les clubs
           </button>
         </div>
       )}
@@ -466,23 +461,15 @@ export const Feed: React.FC = () => {
             </div>
             <div>
               <h3 className="font-bold text-sm text-[#131b2e]">Insertion Pro &amp; CV-Thèque</h3>
-              <p className="text-xs text-[#44474c]">Votre CV certifié et coaching carrière pour décrocher un stage</p>
+              <p className="text-xs text-[#44474c]">Votre CV certifié et compétences pour décrocher un stage</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsCvModalOpen(true)}
-              className="px-4 py-2 bg-[#00629d] hover:bg-[#004a77] text-white rounded-full text-xs font-semibold shadow-xs cursor-pointer"
-            >
-              Ouvrir mon CV
-            </button>
-            <button
-              onClick={() => setIsCoachingModalOpen(true)}
-              className="px-3.5 py-2 bg-white text-[#b87500] border border-[#ffddb8] rounded-full text-xs font-bold hover:bg-[#faf8ff] cursor-pointer"
-            >
-              Coaching IA
-            </button>
-          </div>
+          <button
+            onClick={() => setIsCvModalOpen(true)}
+            className="px-4 py-2 bg-[#00629d] hover:bg-[#004a77] text-white rounded-full text-xs font-semibold shadow-xs cursor-pointer"
+          >
+            Consulter ma CV-Thèque
+          </button>
         </div>
       )}
 

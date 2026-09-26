@@ -7,8 +7,6 @@ export const MobileBottomNav: React.FC = () => {
     setActiveBottomNav, 
     setSelectedCategory,
     setIsCvModalOpen,
-    setIsCoachingModalOpen,
-    setIsCreatePostOpen,
     showToast
   } = useApp();
 
@@ -31,17 +29,6 @@ export const MobileBottomNav: React.FC = () => {
 
   return (
     <>
-      {/* Floating Action Button (Publier) */}
-      <div className="fixed bottom-24 right-4 sm:right-8 z-40">
-        <button
-          onClick={() => setIsCreatePostOpen(true)}
-          className="flex items-center gap-1.5 h-12 px-5 rounded-full bg-[#00a2fd] hover:bg-[#0091e6] text-[#001d33] font-bold text-xs shadow-[0_12px_28px_-6px_rgba(11,25,44,0.22)] active:scale-95 transition-all cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          <span>Publier</span>
-        </button>
-      </div>
-
       {/* Fixed Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 w-full z-40 pb-safe bg-[#faf8ff]/90 backdrop-blur-xl border-t border-[#eaedff] shadow-[0_-2px_12px_rgba(0,0,0,0.05)]">
         <div className="max-w-md mx-auto flex justify-around items-center h-16 sm:h-20 px-2">

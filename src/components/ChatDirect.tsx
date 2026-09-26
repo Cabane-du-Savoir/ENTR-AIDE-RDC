@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   X, 
@@ -11,7 +11,9 @@ import {
   MessageSquare, 
   Sparkles,
   User,
-  ArrowRight
+  ArrowRight,
+  Download,
+  Trash2
 } from 'lucide-react';
 
 export const ChatDirect: React.FC = () => {
@@ -24,10 +26,18 @@ export const ChatDirect: React.FC = () => {
     messages, 
     sendMessage, 
     currentUser,
-    setIsCvModalOpen
+    setIsCvModalOpen,
+    showToast
   } = useApp();
 
   const [inputText, setInputText] = useState('');
+  const [attachedFile, setAttachedFile] = useState<{
+    name: string;
+    size: string;
+    url: string;
+  } | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isChatOpen) return null;
 
@@ -35,12 +45,49 @@ export const ChatDirect: React.FC = () => {
   const activeConversation = conversations.find(c => c.id === currentConvId);
   const conversationMessages = currentConvId ? (messages[currentConvId] || []) : [];
 
+  const handlePaperclipClick = () => {
+    // Open system file manager to select CV or required files
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 20 * 1024 * 1024) {
+        showToast('Le document ne doit pas dépasser 20 Mo', 'info');
+        return;
+      }
+      const sizeStr = file.size > 1024 * 1024 
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} Mo`
+        : `${Math.round(file.size / 1024)} Ko`;
+      const fileUrl = URL.createObjectURL(file);
+
+      setAttachedFile({
+        name: file.name,
+        size: sizeStr,
+        url: fileUrl,
+      });
+
+      showToast(`Document "${file.name}" attaché depuis votre appareil !`, 'success');
+    }
+  };
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || !currentConvId) return;
+    if ((!inputText.trim() && !attachedFile) || !currentConvId) return;
 
-    sendMessage(currentConvId, inputText);
+    sendMessage(
+      currentConvId, 
+      inputText.trim() || (attachedFile ? `Document joint : ${attachedFile.name}` : ''), 
+      false,
+      attachedFile ? { name: attachedFile.name, size: attachedFile.size, url: attachedFile.url } : undefined
+    );
+
     setInputText('');
+    setAttachedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleQuickApplication = () => {
@@ -200,16 +247,40 @@ export const ChatDirect: React.FC = () => {
                     >
                       <p>{msg.text}</p>
 
-                      {/* Attached CV Badge */}
-                      {msg.isApplication && (
-                        <div className={`mt-2.5 p-2 rounded-xl flex items-center justify-between gap-2 text-[11px] ${
+                      {/* Attached Document or CV Box */}
+                      {(msg.attachmentName || msg.isApplication) && (
+                        <div className={`mt-2.5 p-2.5 rounded-xl flex items-center justify-between gap-3 text-[11px] ${
                           isMe ? 'bg-white/15 text-white' : 'bg-[#f2f3ff] text-[#00629d] border border-[#dae2fd]'
                         }`}>
-                          <div className="flex items-center gap-1.5 truncate">
+                          <div className="flex items-center gap-2 truncate">
                             <FileText className="w-4 h-4 shrink-0" />
-                            <span className="truncate font-medium">{currentUser.cvFileName || 'CV_Etudiant_Certifie.pdf'}</span>
+                            <div className="truncate text-left">
+                              <span className="truncate font-semibold block">
+                                {msg.attachmentName || currentUser.cvFileName || 'CV_Etudiant_Certifie.pdf'}
+                              </span>
+                              <span className="text-[10px] opacity-80 block">
+                                {msg.attachmentSize || 'Document certifié (PDF)'}
+                              </span>
+                            </div>
                           </div>
-                          <span className="font-bold text-[10px] uppercase">PDF</span>
+
+                          {msg.attachmentUrl ? (
+                            <a
+                              href={msg.attachmentUrl}
+                              download={msg.attachmentName || 'document.pdf'}
+                              className={`px-2.5 py-1 rounded-lg flex items-center gap-1 font-bold text-[10px] shrink-0 cursor-pointer shadow-xs active:scale-95 ${
+                                isMe ? 'bg-white text-[#00629d]' : 'bg-[#00629d] text-white hover:bg-[#004a77]'
+                              }`}
+                              title="Télécharger le fichier"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>Ouvrir</span>
+                            </a>
+                          ) : (
+                            <span className="font-bold text-[10px] uppercase px-1.5 py-0.5 rounded bg-black/10">
+                              PDF
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -218,28 +289,56 @@ export const ChatDirect: React.FC = () => {
               })}
             </div>
 
-            {/* Input Form */}
+            {/* Attached File Preview Bar before sending */}
+            {attachedFile && (
+              <div className="px-4 py-2 bg-[#eaedff] border-t border-[#dae2fd] flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2 truncate text-[#003558]">
+                  <FileText className="w-4 h-4 text-[#00629d] shrink-0" />
+                  <span className="font-semibold truncate">{attachedFile.name}</span>
+                  <span className="text-[10px] text-[#44474c]">({attachedFile.size})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAttachedFile(null)}
+                  className="p-1 text-[#ba1a1a] hover:bg-rose-100 rounded-full transition-colors cursor-pointer"
+                  title="Retirer ce fichier"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Input Form with File Manager Input */}
             <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-[#eaedff] flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleQuickApplication}
-                className="p-2 rounded-xl text-[#00629d] hover:bg-[#eaedff] transition-colors cursor-pointer"
-                title="Joindre mon CV"
+              {/* Hidden file input for system file manager */}
+              <input
+                id="chat-file-upload"
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelected}
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+              />
+
+              <label
+                htmlFor="chat-file-upload"
+                className="p-2.5 rounded-full text-[#00629d] bg-[#f2f3ff] hover:bg-[#eaedff] border border-[#dae2fd] transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center shrink-0"
+                title="Épingle : Ouvrir le gestionnaire de fichiers de votre téléphone pour joindre un CV ou document"
               >
                 <Paperclip className="w-4 h-4" />
-              </button>
+              </label>
 
               <input
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Rédigez votre message ou posez une question..."
+                placeholder={attachedFile ? 'Ajouter un message avec votre document...' : 'Rédigez votre message ou posez une question...'}
                 className="flex-1 px-4 py-2.5 bg-[#f2f3ff] border border-[#dae2fd] rounded-full text-xs text-[#131b2e] placeholder-[#75777d] focus:outline-none focus:border-[#00629d]"
               />
 
               <button
                 type="submit"
-                disabled={!inputText.trim()}
+                disabled={!inputText.trim() && !attachedFile}
                 className="p-2.5 rounded-full bg-[#00629d] text-white hover:bg-[#004a77] disabled:opacity-40 transition-all cursor-pointer shadow-xs active:scale-95"
               >
                 <Send className="w-4 h-4" />
