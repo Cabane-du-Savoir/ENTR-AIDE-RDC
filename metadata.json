@@ -1,0 +1,6 @@
+{
+  "name": "ENTR'AIDE RDC",
+  "description": "Réseau social et plateforme d'insertion professionnelle pour la jeunesse étudiante congolaise (stages, emplois, bourses, événements et détente en RDC).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
