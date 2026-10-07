@@ -18,6 +18,17 @@ import {
   INITIAL_MESSAGES,
   INITIAL_STORIES 
 } from '../data/mockData';
+import {
+  seedInitialPostsIfEmpty,
+  seedInitialStoriesIfEmpty,
+  subscribeToPosts,
+  savePostToFirestore,
+  subscribeToStories,
+  saveStoryToFirestore,
+  subscribeToMessages,
+  saveMessageToFirestore,
+  saveUserProfileToFirestore
+} from '../lib/firebase';
 
 export interface ToastNotification {
   id: string;
@@ -196,6 +207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       viewed: false,
     };
     setStories(prev => [newStory, ...prev]);
+    saveStoryToFirestore(newStory);
     setIsStoryCreateOpen(false);
     showToast('Votre statut / story a été publié avec succès !', 'success');
   };
@@ -231,6 +243,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('entraide_favs', JSON.stringify(favorites));
   }, [favorites]);
 
+  // Sync to Firestore Cloud Database in real-time
+  useEffect(() => {
+    seedInitialPostsIfEmpty();
+    seedInitialStoriesIfEmpty();
+
+    const unsubPosts = subscribeToPosts((livePosts) => {
+      if (livePosts.length > 0) {
+        setPosts(livePosts);
+      }
+    });
+
+    const unsubStories = subscribeToStories((liveStories) => {
+      if (liveStories.length > 0) {
+        setStories(liveStories);
+      }
+    });
+
+    const unsubMessages = subscribeToMessages((liveMessages) => {
+      setMessages(prev => ({
+        ...prev,
+        ...liveMessages
+      }));
+    });
+
+    return () => {
+      unsubPosts();
+      unsubStories();
+      unsubMessages();
+    };
+  }, []);
+
   const switchRole = (role: UserRole) => {
     if (INITIAL_PROFILES[role]) {
       setCurrentUser(INITIAL_PROFILES[role]);
@@ -240,6 +283,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const registerUser = (profile: UserProfile) => {
     setCurrentUser(profile);
+    saveUserProfileToFirestore(profile);
     setIsRegisterOpen(false);
     showToast(`Compte créé avec succès ! Bienvenue ${profile.name}`, 'success');
   };
@@ -264,11 +308,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!isLiked) {
           showToast(`Vous aimez : "${p.title.slice(0, 32)}..."`, 'heart');
         }
-        return {
+        const updated = {
           ...p,
           likedByCurrentUser: !isLiked,
           likesCount: isLiked ? Math.max(0, p.likesCount - 1) : p.likesCount + 1,
         };
+        savePostToFirestore(updated);
+        return updated;
       }
       return p;
     }));
@@ -288,11 +334,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
-        return {
+        const updated = {
           ...p,
           commentsCount: p.commentsCount + 1,
           comments: [newComment, ...(p.comments || [])],
         };
+        savePostToFirestore(updated);
+        return updated;
       }
       return p;
     }));
@@ -337,6 +385,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setPosts(prev => [newPost, ...prev]);
+    savePostToFirestore(newPost);
     setIsCreatePostOpen(false);
     showToast('Publication soumise ! Placée en attente de modération admin.', 'info');
   };
@@ -344,7 +393,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const approvePost = (postId: string) => {
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
-        return { ...p, status: 'approved' };
+        const updated = { ...p, status: 'approved' as const };
+        savePostToFirestore(updated);
+        return updated;
       }
       return p;
     }));
@@ -354,7 +405,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const rejectPost = (postId: string, reason?: string) => {
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
-        return { ...p, status: 'rejected', rejectionReason: reason || 'Non conforme aux règles de la communauté' };
+        const updated = { ...p, status: 'rejected' as const, rejectionReason: reason || 'Non conforme aux règles de la communauté' };
+        savePostToFirestore(updated);
+        return updated;
       }
       return p;
     }));
@@ -364,11 +417,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const boostPost = (postId: string, days: number, planName: string) => {
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
-        return { 
+        const updated = { 
           ...p, 
           isBoosted: true,
           tags: Array.from(new Set(['En Vedette', ...p.tags]))
         };
+        savePostToFirestore(updated);
+        return updated;
       }
       return p;
     }));
@@ -404,6 +459,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...prev,
       [convId]: [...(prev[convId] || []), newMsg],
     }));
+    saveMessageToFirestore(convId, newMsg);
 
     setConversations(prev => prev.map(c => {
       if (c.id === convId) {

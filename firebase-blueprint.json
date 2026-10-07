@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Profil utilisateur (étudiant, professionnel, recruteur)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "recruiter", "admin"] },
+        "university": { "type": "string" },
+        "province": { "type": "string" },
+        "avatar": { "type": "string" },
+        "bio": { "type": "string" },
+        "skills": { "type": "string" },
+        "cvUrl": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Publication du fil ou opportunité d'emploi / stage / bourse",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "author": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorRole": { "type": "string" },
+        "avatar": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string" },
+        "category": { "type": "string" },
+        "province": { "type": "string" },
+        "university": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "likes": { "type": "number" },
+        "commentsCount": { "type": "number" },
+        "isVerified": { "type": "boolean" },
+        "isBoosted": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "author", "content"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Message instantané entre étudiants et recruteurs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "senderId", "text"]
+    },
+    "Story": {
+      "title": "Story",
+      "description": "Statut temporaire ou story partagée par un membre",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "author": { "type": "string" },
+        "authorAvatar": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "caption": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "author"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Profils des utilisateurs"
+    },
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Publications, opportunités et bourses"
+    },
+    "/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Messages directs"
+    },
+    "/stories/{storyId}": {
+      "schema": "Story",
+      "description": "Stories partagées"
+    }
+  }
+}

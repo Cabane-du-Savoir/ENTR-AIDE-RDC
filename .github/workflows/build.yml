@@ -26,9 +26,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle'
 
-      - name: 🤖 Configurer Android SDK
-        uses: android-actions/setup-android@v3
+      - name: 🤖 Accepter les licences Android SDK
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: 📦 Installer les dépendances Node.js
         run: npm install --legacy-peer-deps
@@ -46,7 +48,7 @@ jobs:
           ./gradlew assembleDebug --no-daemon
           cd ..
           cp android/app/build/outputs/apk/debug/app-debug.apk ./entraide-rdc.apk
-          ls -la entraide-rdc.apk
+          ls -lh entraide-rdc.apk
 
       - name: 🗜️ Archiver le livrable Web
         run: |
@@ -62,7 +64,7 @@ jobs:
             ## 🎉 Livrables prêts au téléchargement !
             
             ### 📱 Pour votre smartphone Android :
-            Téléchargez le fichier **`entraide-rdc.apk`** ci-dessous, transférez-le sur votre téléphone ou ouvrez le lien directement depuis votre smartphone pour l'installer.
+            Téléchargez le fichier **`entraide-rdc.apk`** ci-dessous, transférez-le sur votre téléphone ou ouvrez cette page directement depuis votre smartphone pour l'installer.
             
             ### 🌐 Pour l'hébergement Web :
             Téléchargez **`entraide-rdc-web-dist.zip`** pour déployer le site sur votre hébergeur.
