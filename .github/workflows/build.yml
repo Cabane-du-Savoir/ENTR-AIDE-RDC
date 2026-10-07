@@ -21,16 +21,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: ☕ Configurer Java JDK 17
+      - name: ☕ Configurer Java JDK 21 (requis par Android Gradle 8.14)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'gradle'
 
-      - name: 🤖 Accepter les licences Android SDK
+      - name: 🤖 Accepter les licences et préparer Android SDK 35
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
 
       - name: 📦 Installer les dépendances Node.js
         run: npm install --legacy-peer-deps
@@ -45,9 +46,9 @@ jobs:
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
           cd ..
-          cp android/app/build/outputs/apk/debug/app-debug.apk ./entraide-rdc.apk
+          find android/app/build/outputs/apk -name "*.apk" -exec cp {} ./entraide-rdc.apk \;
           ls -lh entraide-rdc.apk
 
       - name: 🗜️ Archiver le livrable Web
@@ -73,5 +74,14 @@ jobs:
             entraide-rdc-web-dist.zip
           draft: false
           prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📦 Téléchargement direct secondaire (Secours si besoin)
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: entraide-rdc-apk
+          path: entraide-rdc.apk
+          retention-days: 7
