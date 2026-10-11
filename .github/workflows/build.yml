@@ -42,35 +42,40 @@ jobs:
       - name: 🔄 Synchroniser avec le projet Android Capacitor
         run: npx cap sync android
 
-      - name: 🔨 Compiler le fichier APK Android avec Gradle
+      - name: 🔨 Compiler le fichier APK et le Bundle Android avec Gradle
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew assembleDebug -x test -x lint -x check --no-daemon --stacktrace
+          ./gradlew assembleDebug bundleDebug -x test -x lint -x check --no-daemon --stacktrace
           cd ..
           find android/app/build/outputs/apk -name "*.apk" -exec cp {} ./entraide-rdc.apk \;
-          ls -lh entraide-rdc.apk
+          find android/app/build/outputs/bundle -name "*.aab" -exec cp {} ./entraide-rdc.aab \;
+          ls -lh entraide-rdc.apk entraide-rdc.aab
 
       - name: 🗜️ Archiver le livrable Web
         run: |
           cd dist && zip -r ../entraide-rdc-web-dist.zip . && cd ..
 
-      - name: 🚀 Mettre à disposition l'APK et le Web dans GitHub Releases
+      - name: 🚀 Mettre à disposition l'APK, le Bundle (.aab) et le Web dans GitHub Releases
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
           tag_name: v1.0
-          name: "📱 ENTR'AIDE RDC - APK Android & Application Web"
+          name: "📱 ENTR'AIDE RDC - APK & Bundle Android (.aab)"
           body: |
             ## 🎉 Livrables prêts au téléchargement !
             
-            ### 📱 Pour votre smartphone Android :
-            Téléchargez le fichier **`entraide-rdc.apk`** ci-dessous, transférez-le sur votre téléphone ou ouvrez cette page directement depuis votre smartphone pour l'installer.
+            ### 📱 Pour tester sur smartphone Android :
+            Téléchargez le fichier **`entraide-rdc.apk`** ci-dessous et installez-le directement sur votre téléphone.
+            
+            ### 📦 Pour la publication Google Play Store :
+            Téléchargez le fichier **`entraide-rdc.aab`** (Android App Bundle).
             
             ### 🌐 Pour l'hébergement Web :
-            Téléchargez **`entraide-rdc-web-dist.zip`** pour déployer le site sur votre hébergeur.
+            Téléchargez **`entraide-rdc-web-dist.zip`** pour déployer le site sur votre serveur web.
           files: |
             entraide-rdc.apk
+            entraide-rdc.aab
             entraide-rdc-web-dist.zip
           draft: false
           prerelease: false
@@ -82,6 +87,8 @@ jobs:
         uses: actions/upload-artifact@v4
         continue-on-error: true
         with:
-          name: entraide-rdc-apk
-          path: entraide-rdc.apk
+          name: entraide-rdc-android-packages
+          path: |
+            entraide-rdc.apk
+            entraide-rdc.aab
           retention-days: 7
