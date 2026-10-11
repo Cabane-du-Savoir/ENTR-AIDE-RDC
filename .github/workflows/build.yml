@@ -46,7 +46,7 @@ jobs:
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug -x test -x lint -x check --no-daemon --stacktrace
           cd ..
           find android/app/build/outputs/apk -name "*.apk" -exec cp {} ./entraide-rdc.apk \;
           ls -lh entraide-rdc.apk

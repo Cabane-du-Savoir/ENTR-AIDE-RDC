@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
-  getFirestore, 
+  initializeFirestore, 
   collection, 
   doc, 
   setDoc, 
@@ -19,8 +19,10 @@ import { INITIAL_POSTS, INITIAL_STORIES } from '../data/mockData';
 // Initialize Firebase App
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Use the dedicated database ID if configured, or default
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
+// Use the dedicated database ID with experimentalForceLongPolling for instant, reliable connection in sandboxes, iframes and mobile networks
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, firebaseConfig.firestoreDatabaseId || '(default)');
 
 // Verify database connection at startup
 export async function testConnection() {
@@ -179,11 +181,16 @@ export function subscribeToMessages(callback: (messagesByConv: Record<string, Di
         if (!grouped[convId]) grouped[convId] = [];
         grouped[convId].push({
           id: data.id,
+          conversationId: convId,
           senderId: data.senderId,
+          senderName: data.senderName || 'Utilisateur',
+          senderRole: data.senderRole || 'student',
           text: data.text,
-          time: data.time,
+          timestamp: data.timestamp || data.time || 'À l’instant',
           isApplication: data.isApplication,
-          attachment: data.attachment
+          attachmentName: data.attachmentName || data.attachment?.name,
+          attachmentSize: data.attachmentSize || data.attachment?.size,
+          attachmentUrl: data.attachmentUrl || data.attachment?.url,
         });
       });
       callback(grouped);
